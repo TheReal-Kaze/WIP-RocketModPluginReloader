@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using Rocket.API;
 using Rocket.Core;
 using Rocket.Core.Plugins;
 using Rocket.Core.Utils;
@@ -42,12 +41,7 @@ namespace PatchModule
         {
             var r = R.Plugins;
 
-            if (Text.ToLower().Contains("/rm unload"))
-            {
-                MethodInfo unloadMethod = r.GetType().GetMethod("unloadPlugins", BindingFlags.NonPublic | BindingFlags.Instance);
-                unloadMethod.Invoke(r, null);
-            }
-            else if (Text.ToLower().Contains("/rm reload"))
+            if (Text.ToLower().Contains("/rmf rel") )
             {
                 MethodInfo reloadMethod = r.GetType().GetMethod("Reload", BindingFlags.NonPublic | BindingFlags.Instance);
                 reloadMethod.Invoke(r, null);
@@ -72,7 +66,7 @@ namespace PatchModule
 
                     if (RocketHelper.GetTypesFromInterface(assembly, "IRocketPlugin").FindAll((Type x) => !x.IsAbstract).Count == 1)
                     {
-                        Logger.Log("Loading " + assembly.GetName().Name + " from " + assembly.Location);
+                        Logger.Log("Loading " + assembly.GetName().Name + " from the memory" );
                         __result.Add(assembly);
                     }
                     else

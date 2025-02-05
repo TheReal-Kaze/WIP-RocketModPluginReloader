@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketModFix", "RocketModFix\RocketModFix.csproj", "{44F180B5-A720-4AD9-B7A7-40FB08BAEADF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RocketModPluginReloader", "RocketModFix\RocketModPluginReloader.csproj", "{44F180B5-A720-4AD9-B7A7-40FB08BAEADF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
