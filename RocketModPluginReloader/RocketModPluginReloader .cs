@@ -27,8 +27,8 @@ namespace PatchModule
             harmony = new Harmony(HarmonyId);
             harmony.PatchAll();
 
-            var list = harmony.GetPatchedMethods().ToList();
-            Logger.Log($"Count of patched method {list.Count}");
+            //var list = harmony.GetPatchedMethods().ToList();
+            //Logger.Log($"Count of patched method {list.Count}");
 
             RegisterConsoleInput();
         }
@@ -39,13 +39,11 @@ namespace PatchModule
 
         private static void HandleInput(string Text, ref bool ShouldExecuteCommand)
         {
-            var r = R.Plugins;
-
-            if (Text.ToLower().Contains("/rmf rel") )
-            {
-                MethodInfo reloadMethod = r.GetType().GetMethod("Reload", BindingFlags.NonPublic | BindingFlags.Instance);
-                reloadMethod.Invoke(r, null);
-            }
+            if (!Text.ToLower().Contains("/rmf rel")) return;
+            
+            var reloadMethod = R.Plugins.GetType().GetMethod("Reload", BindingFlags.NonPublic | BindingFlags.Instance);
+            reloadMethod.Invoke(R.Plugins, null);
+            
         }
     }
 
