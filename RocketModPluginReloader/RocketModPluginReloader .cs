@@ -13,7 +13,7 @@ using Logger = Rocket.Core.Logging.Logger;
 
 namespace PatchModule
 {
-    public class RocketModFix : IModuleNexus
+    public class RocketModPluginReloader : IModuleNexus
     {
         public const string HarmonyId = "com.Kaze.rmfix";
         public Harmony? harmony;
