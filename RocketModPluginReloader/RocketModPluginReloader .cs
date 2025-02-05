@@ -39,7 +39,7 @@ namespace PatchModule
 
         private static void HandleInput(string Text, ref bool ShouldExecuteCommand)
         {
-            if (!Text.ToLower().Contains("/rmf rel")) return;
+            if (!Text.ToLower().Contains("/rm rel")) return;
             
             var reloadMethod = R.Plugins.GetType().GetMethod("Reload", BindingFlags.NonPublic | BindingFlags.Instance);
             reloadMethod.Invoke(R.Plugins, null);
