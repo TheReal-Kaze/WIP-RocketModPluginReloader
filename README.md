@@ -12,7 +12,7 @@ This module removes that limitation by patching RocketMod, allowing plugins to b
 /rm reload
 
 -Installation:
-Place the RocketModFix folder inside the modules folder of your server.
+Place the RocketModPluginReloader folder inside the modules folder of your server.
 Done!
 
 Credits
