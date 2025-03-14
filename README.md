@@ -34,3 +34,5 @@ License
 This project includes code from OpenMod, which is licensed under MIT License.
 
 Modifications have been made to enable dynamic reloading for RocketMod.
+
+(it will create tons of config files atm, will fix it in the future to have only 1 with the name of the og dll)
