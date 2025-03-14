@@ -22,8 +22,11 @@ Some code from OpenMod has been used in this repository.
 Special thanks to:
 
 -Trojaner
+
 -Rube200
+
 -iamsilk 
+
 -Diffoz
 
 License
