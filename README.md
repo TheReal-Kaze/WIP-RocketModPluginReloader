@@ -1,4 +1,4 @@
-RocketMod Hot Reload Module
+RocketMod Plugin Reloading Module
 
 🚧 Work in Progress 🚧
 
