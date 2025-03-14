@@ -7,10 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lib.Harmony" Version="2.3.3" />
-    <PackageReference Include="RestoreMonarchy.RocketRedist" Version="3.24.7.1" />
+    <PackageReference Include="AsmResolver.PE" Version="5.5.1" />
+    <PackageReference Include="Lib.Harmony" Version="2.3.5" />
     <PackageReference Include="RocketModFix.UnityEngine.Redist" Version="2021.3.29.1" />
-    <PackageReference Include="RocketModFix.Unturned.Redist.Client" Version="3.24.7.1" />
+    <PackageReference Include="RocketModFix.Unturned.Redist.Client" Version="3.25.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Rocket.Core">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\U3DS\Modules\RocketModPluginReloader\Rocket.Core.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
