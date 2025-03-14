@@ -7,7 +7,6 @@ using SDG.Unturned;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using AsmResolver.PE;
 using AsmResolver.PE.DotNet.Builder;
@@ -25,15 +24,14 @@ namespace PatchModule
         public Harmony? harmony;
 
         internal void RegisterConsoleInput() => CommandWindow.onCommandWindowInputted += HandleInput;
-
         internal void UnregisterConsoleInput() => CommandWindow.onCommandWindowInputted -= HandleInput;
         public void initialize()
         {
             harmony = new Harmony(HarmonyId);
             harmony.PatchAll();
 
-            var list = harmony.GetPatchedMethods().ToList();
-            Logger.Log($"Count of patched method {list.Count}");
+            //var list = harmony.GetPatchedMethods().ToList();
+            //Logger.Log($"Count of patched method {list.Count}");
 
             AssemblyName assemblyName = Assembly.GetExecutingAssembly().GetName();
             Logger.Log($"{assemblyName.Name} {assemblyName.Version} has been loaded!");
@@ -43,19 +41,14 @@ namespace PatchModule
         public void shutdown()
         {
             UnregisterConsoleInput();
+            harmony?.UnpatchAll(HarmonyId);
         }
         private void HandleInput(string Text, ref bool ShouldExecuteCommand)
         {
             if (!Text.ToLower().Contains("/rm rel")) return;
 
-            var list = harmony?.GetPatchedMethods().ToList();
-            Logger.Log($"Count of patched method {list?.Count}");
-
             var reloadMethod = AccessTools.Method(typeof(RocketPluginManager), "Reload");
             reloadMethod.Invoke(R.Plugins, null);
-
-            list = harmony?.GetPatchedMethods().ToList();
-            Logger.Log($"Count of patched method {list?.Count}");
 
         }
     }
