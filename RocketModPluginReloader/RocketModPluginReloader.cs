@@ -19,17 +19,28 @@ using Rocket.Core.Assets;
 using System.Linq;
 using Rocket.API;
 using Rocket.API.Collections;
-using System.Xml.Linq;
+using Rocket.Unturned.Events;
+using Rocket.Unturned.Player;
+using UnityEngine;
+using Rocket.Unturned.Chat;
 
-namespace PatchModule
+namespace RocketModPluginReloader
 {
     public class RocketModPluginReloader : IModuleNexus
     {
         public const string HarmonyId = "com.Kaze.rmfix";
         public Harmony? harmony;
 
-        internal void RegisterConsoleInput() => CommandWindow.onCommandWindowInputted += HandleInput;
-        internal void UnregisterConsoleInput() => CommandWindow.onCommandWindowInputted -= HandleInput;
+        internal void RegisterInput() 
+        {
+            CommandWindow.onCommandWindowInputted += HandleInput;
+            UnturnedPlayerEvents.OnPlayerChatted += OnPlayerChatted;
+        }
+        internal void UnregisterInput()
+        {
+            CommandWindow.onCommandWindowInputted -= HandleInput;
+            UnturnedPlayerEvents.OnPlayerChatted -= OnPlayerChatted;
+        }
         public void initialize()
         {
             harmony = new Harmony(HarmonyId);
@@ -41,29 +52,35 @@ namespace PatchModule
             AssemblyName assemblyName = Assembly.GetExecutingAssembly().GetName();
             Logger.Log($"{assemblyName.Name} {assemblyName.Version} has been loaded!");
 
-            RegisterConsoleInput();
+            RegisterInput();
+            
         }
         public void shutdown()
         {
-            UnregisterConsoleInput();
+            UnregisterInput();
             harmony?.UnpatchAll(HarmonyId);
         }
         private void HandleInput(string Text, ref bool ShouldExecuteCommand)
         {
-            if (!Text.ToLower().Contains("/rm rel")) return;
+            if(!Text.StartsWith("/")) return;
+            if (!Text.ToLower().Contains("rm rel")) return;
 
             var reloadMethod = AccessTools.Method(typeof(RocketPluginManager), "Reload");
             reloadMethod.Invoke(R.Plugins, null);
 
+            UnturnedChat.Say("Plugins reloaded!", Color.green);
         }
-    }
-
-    [HarmonyPatch(typeof(RocketPluginManager))]
+        private void OnPlayerChatted(UnturnedPlayer player, ref Color color, string message, EChatMode chatMode, ref bool cancel)
+        {
+            if(player.IsAdmin) HandleInput(message, ref cancel);
+        }
+}
+    [HarmonyPatch]
     public class HarmonyFix
     {
         public static int x = 0;
         [HarmonyPrefix]
-        [HarmonyPatch(nameof(RocketPluginManager.LoadAssembliesFromDirectory))]
+        [HarmonyPatch(typeof(RocketPluginManager),nameof(RocketPluginManager.LoadAssembliesFromDirectory))]
         public static bool LoadAssembliesFromDirectoryFix(ref List<Assembly> __result, string directory, string extension = "*.dll")
         {
             __result = new List<Assembly>();
@@ -91,6 +108,62 @@ namespace PatchModule
                     Logger.LogException(ex, "Could not load plugin assembly: " + item.Name);
                 }
             }
+            return false;
+        }
+       
+        [HarmonyPatch(typeof(RocketPlugin), MethodType.Constructor)]
+        [HarmonyPrefix]
+        public static bool RocketPluginPrefix(object __instance)
+        {
+            //Logger.Log("Patching RocketPlugin constructor...");
+
+            var type = __instance.GetType();
+            var assembly = type.Assembly;
+
+            PrivateSet(__instance, "Assembly", assembly);
+
+            var name = assembly.GetName().Name;
+            int lastUnderscore = name.LastIndexOf('_');
+            string unifiedName = lastUnderscore > -1 ? name.Substring(0, lastUnderscore) : name;
+
+            PrivateSet(__instance, "Name", unifiedName);
+
+            var directory = Path.Combine(Rocket.Core.Environment.PluginsDirectory, unifiedName);
+            PrivateSet(__instance, "Directory", directory);
+
+            if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+            
+            //Translations
+            var defaultTranslationsProp = AccessTools.Property(type, "DefaultTranslations");
+            var defaultTranslations = defaultTranslationsProp?.GetValue(__instance) as TranslationList;
+
+            if (defaultTranslations != null | defaultTranslations.Count() != 0)
+            {
+                var translationPath = Path.Combine(
+                    directory,
+                    string.Format(Rocket.Core.Environment.PluginTranslationFileTemplate, unifiedName, R.Settings.Instance.LanguageCode));
+
+                var xmlAsset = new XMLFileAsset<TranslationList>(
+                    translationPath,
+                    new Type[]
+                    {
+                    typeof(TranslationList),
+                    typeof(TranslationListEntry)
+                    },
+                    defaultTranslations!
+                );
+
+                var translationsField = AccessTools.Field(type, "translations");
+                translationsField?.SetValue(__instance, xmlAsset);
+
+                //Logger.Log("Translations loaded: " + translationsField?.GetValue(__instance) != null ? "Correctly" : "Not Correctly");
+
+                defaultTranslations.AddUnknownEntries(xmlAsset);
+            }
+
+            var stateField = AccessTools.Field(type, "state");
+            stateField?.SetValue(__instance, PluginState.Unloaded);
+
             return false;
         }
         public static byte[] ModifyAssembly(byte[] rawAssembly)
@@ -132,76 +205,10 @@ namespace PatchModule
                 return output.ToArray();
             }
         }
-    }
-
-    [HarmonyPatch]
-    public class RocketPluginCtorPatch
-    {
-        [HarmonyPatch(typeof(RocketPlugin), MethodType.Constructor)]
-        [HarmonyPrefix]
-        public static bool RocketPluginPrefix(object __instance)
-        {
-            Logger.Log("Patching RocketPlugin constructor...");
-
-            var type = __instance.GetType();
-            var assembly = type.Assembly;
-
-            SetPrivateAutoProperty(__instance, "Assembly", assembly);
-
-            var name = assembly.GetName().Name;
-            int lastUnderscore = name.LastIndexOf('_');
-            string unifiedName = lastUnderscore > -1 ? name.Substring(0, lastUnderscore) : name;
-
-            SetPrivateAutoProperty(__instance, "Name", unifiedName);
-
-            var directory = Path.Combine(Rocket.Core.Environment.PluginsDirectory, unifiedName);
-            SetPrivateAutoProperty(__instance, "Directory", directory);
-
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            //Translations
-            var defaultTranslationsProp = AccessTools.Property(type, "DefaultTranslations");
-            var defaultTranslations = defaultTranslationsProp?.GetValue(__instance) as TranslationList;
-
-            if (defaultTranslations != null | defaultTranslations.Count() != 0)
-            {
-                var translationPath = Path.Combine(
-                    directory,
-                    string.Format(Rocket.Core.Environment.PluginTranslationFileTemplate, unifiedName, R.Settings.Instance.LanguageCode));
-
-                var xmlAsset = new XMLFileAsset<TranslationList>(
-                    translationPath,
-                    new Type[]
-                    {
-                    typeof(TranslationList),
-                    typeof(TranslationListEntry)
-                    },
-                    defaultTranslations
-                );
-
-                var translationsField = AccessTools.Field(type, "translations");
-                translationsField?.SetValue(__instance, xmlAsset);
-
-                Logger.Log("Translations loaded: " + translationsField?.GetValue(__instance) == null ? "Not Correctly" : "Correctly");
-
-                defaultTranslations.AddUnknownEntries(xmlAsset);
-            }
-
-            var stateField = AccessTools.Field(type, "state");
-            stateField?.SetValue(__instance, PluginState.Unloaded);
-
-            return false;
-        }
-
-        static void SetPrivateAutoProperty<T>(object instance, string propName, T value)
+        static void PrivateSet<T>(object instance, string propName, T value)
         {
             var backingField = AccessTools.Field(instance.GetType(), $"<{propName}>k__BackingField");
             backingField?.SetValue(instance, value);
         }
-
     }
-
 }
