@@ -15,6 +15,11 @@ using AsmResolver.PE.DotNet.Metadata.Tables;
 using AsmResolver.PE.DotNet.Metadata.Tables.Rows;
 using Logger = Rocket.Core.Logging.Logger;
 using AsmResolver.IO;
+using Rocket.Core.Assets;
+using System.Linq;
+using Rocket.API;
+using Rocket.API.Collections;
+using System.Xml.Linq;
 
 namespace PatchModule
 {
@@ -52,11 +57,11 @@ namespace PatchModule
 
         }
     }
+
     [HarmonyPatch(typeof(RocketPluginManager))]
     public class HarmonyFix
     {
         public static int x = 0;
-
         [HarmonyPrefix]
         [HarmonyPatch(nameof(RocketPluginManager.LoadAssembliesFromDirectory))]
         public static bool LoadAssembliesFromDirectoryFix(ref List<Assembly> __result, string directory, string extension = "*.dll")
@@ -128,4 +133,75 @@ namespace PatchModule
             }
         }
     }
+
+    [HarmonyPatch]
+    public class RocketPluginCtorPatch
+    {
+        [HarmonyPatch(typeof(RocketPlugin), MethodType.Constructor)]
+        [HarmonyPrefix]
+        public static bool RocketPluginPrefix(object __instance)
+        {
+            Logger.Log("Patching RocketPlugin constructor...");
+
+            var type = __instance.GetType();
+            var assembly = type.Assembly;
+
+            SetPrivateAutoProperty(__instance, "Assembly", assembly);
+
+            var name = assembly.GetName().Name;
+            int lastUnderscore = name.LastIndexOf('_');
+            string unifiedName = lastUnderscore > -1 ? name.Substring(0, lastUnderscore) : name;
+
+            SetPrivateAutoProperty(__instance, "Name", unifiedName);
+
+            var directory = Path.Combine(Rocket.Core.Environment.PluginsDirectory, unifiedName);
+            SetPrivateAutoProperty(__instance, "Directory", directory);
+
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            //Translations
+            var defaultTranslationsProp = AccessTools.Property(type, "DefaultTranslations");
+            var defaultTranslations = defaultTranslationsProp?.GetValue(__instance) as TranslationList;
+
+            if (defaultTranslations != null | defaultTranslations.Count() != 0)
+            {
+                var translationPath = Path.Combine(
+                    directory,
+                    string.Format(Rocket.Core.Environment.PluginTranslationFileTemplate, unifiedName, R.Settings.Instance.LanguageCode));
+
+                var xmlAsset = new XMLFileAsset<TranslationList>(
+                    translationPath,
+                    new Type[]
+                    {
+                    typeof(TranslationList),
+                    typeof(TranslationListEntry)
+                    },
+                    defaultTranslations
+                );
+
+                var translationsField = AccessTools.Field(type, "translations");
+                translationsField?.SetValue(__instance, xmlAsset);
+
+                Logger.Log("Translations loaded: " + translationsField?.GetValue(__instance) == null ? "Not Correctly" : "Correctly");
+
+                defaultTranslations.AddUnknownEntries(xmlAsset);
+            }
+
+            var stateField = AccessTools.Field(type, "state");
+            stateField?.SetValue(__instance, PluginState.Unloaded);
+
+            return false;
+        }
+
+        static void SetPrivateAutoProperty<T>(object instance, string propName, T value)
+        {
+            var backingField = AccessTools.Field(instance.GetType(), $"<{propName}>k__BackingField");
+            backingField?.SetValue(instance, value);
+        }
+
+    }
+
 }

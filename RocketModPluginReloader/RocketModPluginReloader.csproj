@@ -14,6 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="Rocket.API">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\U3DS\Modules\Rocket.Unturned\Rocket.API.dll</HintPath>
+    </Reference>
     <Reference Include="Rocket.Core">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\U3DS\Modules\RocketModPluginReloader\Rocket.Core.dll</HintPath>
     </Reference>
