@@ -1,6 +1,11 @@
 ﻿using Rocket.Core;
 using Rocket.Core.Plugins;
 using Rocket.Core.Utils;
+using Rocket.API;
+using Rocket.API.Collections;
+using Rocket.Unturned.Events;
+using Rocket.Unturned.Player;
+using Rocket.Unturned.Chat;
 using HarmonyLib;
 using SDG.Framework.Modules;
 using SDG.Unturned;
@@ -13,16 +18,11 @@ using AsmResolver.PE.DotNet.Builder;
 using AsmResolver.PE.DotNet.Metadata.Strings;
 using AsmResolver.PE.DotNet.Metadata.Tables;
 using AsmResolver.PE.DotNet.Metadata.Tables.Rows;
-using Logger = Rocket.Core.Logging.Logger;
 using AsmResolver.IO;
 using Rocket.Core.Assets;
 using System.Linq;
-using Rocket.API;
-using Rocket.API.Collections;
-using Rocket.Unturned.Events;
-using Rocket.Unturned.Player;
 using UnityEngine;
-using Rocket.Unturned.Chat;
+using Logger = Rocket.Core.Logging.Logger;
 
 namespace RocketModPluginReloader
 {
@@ -52,8 +52,7 @@ namespace RocketModPluginReloader
             AssemblyName assemblyName = Assembly.GetExecutingAssembly().GetName();
             Logger.Log($"{assemblyName.Name} {assemblyName.Version} has been loaded!");
 
-            RegisterInput();
-            
+            RegisterInput(); 
         }
         public void shutdown()
         {
@@ -137,7 +136,7 @@ namespace RocketModPluginReloader
             var defaultTranslationsProp = AccessTools.Property(type, "DefaultTranslations");
             var defaultTranslations = defaultTranslationsProp?.GetValue(__instance) as TranslationList;
 
-            if (defaultTranslations != null | defaultTranslations.Count() != 0)
+            if (defaultTranslations != null && defaultTranslations.Count() != 0)
             {
                 var translationPath = Path.Combine(
                     directory,
