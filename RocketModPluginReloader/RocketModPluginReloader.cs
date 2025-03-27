@@ -109,7 +109,6 @@ namespace RocketModPluginReloader
             }
             return false;
         }
-       
         [HarmonyPatch(typeof(RocketPlugin), MethodType.Constructor)]
         [HarmonyPrefix]
         public static bool RocketPluginPrefix(object __instance)
@@ -136,7 +135,7 @@ namespace RocketModPluginReloader
             var defaultTranslationsProp = AccessTools.Property(type, "DefaultTranslations");
             var defaultTranslations = defaultTranslationsProp?.GetValue(__instance) as TranslationList;
 
-            if (defaultTranslations != null && defaultTranslations.Count() != 0)
+            if (defaultTranslations != null || defaultTranslations.Count() != 0)
             {
                 var translationPath = Path.Combine(
                     directory,
