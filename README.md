@@ -34,3 +34,5 @@ This project includes code from OpenMod, which is licensed under MIT License.
 
 Modifications have been made to enable dynamic reloading for RocketMod.
 
+Known issues:
+- wont load plugins that don't have a config and will throw a null exception
