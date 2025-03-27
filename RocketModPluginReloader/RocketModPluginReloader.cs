@@ -132,10 +132,9 @@ namespace RocketModPluginReloader
             if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
             
             //Translations
-            var defaultTranslationsProp = AccessTools.Property(type, "DefaultTranslations");
-            var defaultTranslations = defaultTranslationsProp?.GetValue(__instance) as TranslationList;
+            var defaultTranslations = new TranslationList();
 
-            if (defaultTranslations != null || defaultTranslations.Count() != 0)
+            if (defaultTranslations != null)
             {
                 var translationPath = Path.Combine(
                     directory,
